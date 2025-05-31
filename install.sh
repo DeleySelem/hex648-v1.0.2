@@ -4,7 +4,8 @@
 
 set -e
 
-VERSION="1.2.1"                                                                  SCRIPT_NAME="hex666.py"
+VERSION="1.2.1"                                                                  
+SCRIPT_NAME="hex666.py"
 COMMAND_NAME="hex666"
 LIB_NAME="libhex64hash.so"
 C_SOURCE="hex64hash.c"
