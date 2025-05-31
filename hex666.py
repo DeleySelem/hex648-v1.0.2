@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 import argparse
-import os                                                                        import subprocess
-import sys
-import ctypes
-import ctypes.util
-import struct
-
+import os
+import subprocess                                                          import sys
+import ctypes                                                              import ctypes.util
+import struct                                                              
 # Program metadata
 VERSION = "1.2.1"
 AUTHOR = "Deley Selem"
@@ -19,14 +17,17 @@ def rol32(x, n):
     return ((x << n) | (x >> (32 - n))) & MASK32
 
 def ror32(x, n):
-    return ((x >> n) | (x << (32 - n))) & MASK32
+    return ((x >> n) | (x << (32 - n))) & MASK32                           
+def bswap32(x):
+    return struct.unpack('<I', struct.pack('>I', x))[0]
 
-def bswap32(x):                                                                      return struct.unpack('<I', struct.pack('>I', x))[0]                          
 # Try to load C library for accelerated operations
 try:
     class HashContext(ctypes.Structure):
         _fields_ = [("ctx", ctypes.c_uint32 * 8)]
-                                                                                     lib_path = ctypes.util.find_library('hex64hash')                                 if not lib_path:
+
+    lib_path = ctypes.util.find_library('hex64hash')
+    if not lib_path:
         lib_path = 'libhex64hash.so'
 
     hex64hash_lib = ctypes.CDLL(lib_path)
