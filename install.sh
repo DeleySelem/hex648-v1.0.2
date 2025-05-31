@@ -4,7 +4,7 @@
 
 set -e
 
-VERSION="1.2.1"                                                                  
+VERSION="1.2.1"
 SCRIPT_NAME="hex666.py"
 COMMAND_NAME="hex666"
 LIB_NAME="libhex64hash.so"
@@ -38,7 +38,8 @@ if [ "$1" = "--user" ]; then
         BIN_PATH="$HOME/.local/bin"
         LIB_PATH="$HOME/.local/lib"
         MAN_PATH="$HOME/.local/share/man/man1"
-    else                                                                                 mkdir -p "$HOME/.local/bin" "$HOME/.local/lib" "$HOME/.local/share/man/man1"
+    else
+        mkdir -p "$HOME/.local/bin" "$HOME/.local/lib" "$HOME/.local/share/man/man1"
         BIN_PATH="$HOME/.local/bin"
         LIB_PATH="$HOME/.local/lib"
         MAN_PATH="$HOME/.local/share/man/man1"
@@ -119,19 +120,19 @@ if [ "$INSTALL_TYPE" = "c" ]; then
             exit 1
         fi
     fi
-
+    
     echo "Compiling optimized C library..."
     gcc -shared -fPIC -o "$TMP_DIR/$LIB_NAME" "$C_SOURCE"
-
+    
     echo "Installing C library..."
     install -m 644 "$TMP_DIR/$LIB_NAME" "$LIB_PATH/"
-
+    
     # Configure library path
     if [ -z "$TERMUX" ]; then
         echo "Updating library cache..."
         ldconfig
     fi
-
+    
     # Cleanup temporary build files
     rm -f "$TMP_DIR/$LIB_NAME"
 fi
