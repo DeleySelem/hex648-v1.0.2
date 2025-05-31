@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import argparse
 import os
-import subprocess                                                          import sys
-import ctypes                                                              import ctypes.util
-import struct                                                              
+import subprocess
+import sys
+import ctypes
+import ctypes.util
+import struct
+
 # Program metadata
 VERSION = "1.2.1"
 AUTHOR = "Deley Selem"
@@ -17,7 +20,8 @@ def rol32(x, n):
     return ((x << n) | (x >> (32 - n))) & MASK32
 
 def ror32(x, n):
-    return ((x >> n) | (x << (32 - n))) & MASK32                           
+    return ((x >> n) | (x << (32 - n))) & MASK32
+
 def bswap32(x):
     return struct.unpack('<I', struct.pack('>I', x))[0]
 
@@ -25,15 +29,15 @@ def bswap32(x):
 try:
     class HashContext(ctypes.Structure):
         _fields_ = [("ctx", ctypes.c_uint32 * 8)]
-
+    
     lib_path = ctypes.util.find_library('hex64hash')
     if not lib_path:
         lib_path = 'libhex64hash.so'
-
+    
     hex64hash_lib = ctypes.CDLL(lib_path)
     hex64hash_lib.Hex64Hash.argtypes = [ctypes.POINTER(HashContext)]
     hex64hash_lib.Hex64Hash.restype = None
-
+    
     def Hex64Hash_c(ctx_list):
         ctx = HashContext()
         for i in range(8):
@@ -41,7 +45,7 @@ try:
         hex64hash_lib.Hex64Hash(ctypes.byref(ctx))
         for i in range(8):
             ctx_list[i] = ctx.ctx[i]
-
+    
     C_LIBRARY_MODE = True
     Hex64Hash = Hex64Hash_c
 except Exception:
@@ -49,7 +53,7 @@ except Exception:
     def Hex64Hash(ctx_list):
         a0, b0, c0, d0 = ctx_list[0], ctx_list[1], ctx_list[2], ctx_list[3]
         a1, b1, c1, d1 = ctx_list[4], ctx_list[5], ctx_list[6], ctx_list[7]
-
+        
         # First quadrant processing
         a0 = (a0 + b0) & MASK32
         c0 ^= a0
@@ -63,7 +67,7 @@ except Exception:
         d0 = (d0 + c0) & MASK32
         b0 ^= d0
         b0 = ror32(b0, 17)
-
+        
         # Second quadrant processing
         t = (a1 + b1) & MASK32
         t ^= c1
@@ -74,11 +78,11 @@ except Exception:
         c1 = (c1 + b1) & MASK32
         d1 ^= c1
         d1 = ror32(d1, 9)
-
+        
         # Update context
         ctx_list[0], ctx_list[1], ctx_list[2], ctx_list[3] = a0, b0, c0, d0
         ctx_list[4], ctx_list[5], ctx_list[6], ctx_list[7] = a1, b1, c1, d1
-
+        
         # Cross-mixing
         ctx_list[3] ^= a1
         ctx_list[7] ^= b1
@@ -142,16 +146,16 @@ def generate_seed_from_passphrase(passphrase, length, iterations):
         0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
         0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
     ]
-
+    
     pass_bytes = passphrase.encode('utf-8')
     for i in range(0, len(pass_bytes), 4):
         chunk = pass_bytes[i:i+4].ljust(4, b'\0')
         word = int.from_bytes(chunk, 'little')
         ctx[i // 4 % 8] ^= word
-
+    
     for _ in range(iterations):
         Hex64Hash(ctx)
-
+    
     seed = []
     while len(seed) < length:
         for word in ctx:
@@ -162,7 +166,7 @@ def generate_seed_from_passphrase(passphrase, length, iterations):
 def apply_seed_to_binary(binary, seed, iterations=1, reverse=False):
     binary_list = list(binary)
     seed_len = len(seed)
-
+    
     for _ in range(iterations):
         indices = reversed(range(len(binary_list))) if reverse else range(len(binary_list))
         for idx in indices:
@@ -183,16 +187,16 @@ def main():
         add_help=False,
         formatter_class=argparse.RawTextHelpFormatter
     )
-
+    
     parser.add_argument('-f', '--file', help='File to encode')
     parser.add_argument('-d', '--decode', help='File to decode')
     parser.add_argument('-p', '--pass', dest='passphrase', help='Encryption passphrase')
-    parser.add_argument('-x', '--iter', type=int, default=1,
+    parser.add_argument('-x', '--iter', type=int, default=1, 
         help='Seed iterations (default: 1)\n  Higher values increase security against brute-force attacks')
     parser.add_argument('-v', '--verbose', action='store_true', help='Show detailed processing')
     parser.add_argument('-rp', '--run-py', help='Run encoded Python script')
     parser.add_argument('-rb', '--run-sh', help='Run encoded Bash script')
-    parser.add_argument('-666', '--hex666', action='store_true',
+    parser.add_argument('-666', '--hex666', action='store_true', 
         help='Encrypt ALL files in current directory (overwrites originals)')
     parser.add_argument('--unhex666', action='store_true',
         help='Decrypt ALL files in current directory (overwrites originals)')
@@ -202,7 +206,7 @@ def main():
     if args.help:
         help_msg = f"""{BANNER}
 
-I Ching-based file encoder with military-grade encryption. Transforms files into ancient hexagrams
+I Ching-based file encoder with military-grade encryption. Transforms files into ancient hexagrams 
 while providing modern security through passphrase-based encryption and iteration hardening.
 
 Security Features:
@@ -251,14 +255,14 @@ Examples:
                 print(f"\n[HEX666 MODE] Encrypting all files (excluding {script_name})")
                 print(f"Passphrase: {'set' if args.passphrase else 'not set'}")
                 print(f"Iterations: {args.iter}")
-
+                
             for filename in os.listdir('.'):
                 if filename == script_name or os.path.isdir(filename):
                     continue
-
+                    
                 if args.verbose:
                     print(f"\nProcessing file: {filename}")
-
+                    
                 try:
                     with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
                         content = f.read()
@@ -281,12 +285,12 @@ Examples:
 
                     with open(filename, 'w', encoding='utf-8') as f:
                         f.write(hex_symbols)
-
+                        
                     if args.verbose:
                         print(f"Encrypted and overwritten: {filename}")
                 except Exception as e:
                     print(f"Error processing {filename}: {str(e)}")
-
+                    
             print("\n[HEX666] Encryption completed!")
             return
 
@@ -297,14 +301,14 @@ Examples:
                 print(f"\n[UNHEX666 MODE] Decrypting all files (excluding {script_name})")
                 print(f"Passphrase: {'set' if args.passphrase else 'not set'}")
                 print(f"Iterations: {args.iter}")
-
+                
             for filename in os.listdir('.'):
                 if filename == script_name or os.path.isdir(filename):
                     continue
-
+                    
                 if args.verbose:
                     print(f"\nProcessing file: {filename}")
-
+                    
                 try:
                     with open(filename, 'r', encoding='utf-8') as f:
                         hex_content = f.read().strip()
@@ -330,12 +334,12 @@ Examples:
 
                     with open(filename, 'w', encoding='utf-8') as f:
                         f.write(content)
-
+                        
                     if args.verbose:
                         print(f"Decrypted and overwritten: {filename}")
                 except Exception as e:
                     print(f"Error processing {filename}: {str(e)}")
-
+                    
             print("\n[UNHEX666] Decryption completed!")
             return
 
@@ -523,5 +527,5 @@ if __name__ == '__main__':
 #   - Shows iteration security multiplier
 #   - Calculates brute-force resistance times
 
-#This implementation maintains 100% compatibility with files created by the original C-based version while adding powerful new mass encryption capabilities. The automatic acceleration detection
+#This implementation maintains 100% compatibility with files created by the original C-based version while adding powerful new mass encryption capabilities. The automatic acceleration detection 
 #ensures optimal performance regardless of installation type.
